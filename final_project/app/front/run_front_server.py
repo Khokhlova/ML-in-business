@@ -3,7 +3,7 @@ import json
 from flask import Flask, render_template, redirect, url_for, request
 from flask_wtf import FlaskForm
 from requests.exceptions import ConnectionError
-from wtforms import IntegerField, SelectField, StringField, FloatField
+from wtforms import IntegerField, FloatField
 from wtforms.validators import DataRequired
 
 import urllib.request
@@ -11,18 +11,18 @@ import json
 
 
 class ClientDataForm(FlaskForm):
-    age = FloatField('Возраст', validators=[DataRequired()])
-    anaemia = IntegerField('Анемия', validators=[DataRequired()])
-    creatinine_phosphokinase = IntegerField('Уровень фермента КФК в крови', validators=[DataRequired()])
-    diabetes = IntegerField('Диабет', validators=[DataRequired()])
-    ejection_fraction = IntegerField('Фракция выброса', validators=[DataRequired()])
-    high_blood_pressure = IntegerField('Гипертония', validators=[DataRequired()])
-    platelets = FloatField('Тромбоциты', validators=[DataRequired()])
-    serum_creatinine = FloatField('Уровень сывороточного креатинина в крови', validators=[DataRequired()])
-    serum_sodium = IntegerField('Уровень сывороточного натрия в крови', validators=[DataRequired()])
-    sex = IntegerField('Пол', validators=[DataRequired()])
-    smoking = IntegerField('Курение', validators=[DataRequired()])
-    time = IntegerField('Срок наблюдения', validators=[DataRequired()])
+    age = FloatField('Возраст, лет', validators=[DataRequired()])
+    anaemia = IntegerField('Анемия, 1/0', validators=[DataRequired()])
+    creatinine_phosphokinase = IntegerField('Уровень фермента КФК в крови, мкг/л', validators=[DataRequired()])
+    diabetes = IntegerField('Диабет, 1/0', validators=[DataRequired()])
+    ejection_fraction = IntegerField('Фракция выброса, %', validators=[DataRequired()])
+    high_blood_pressure = IntegerField('Гипертония, 1/0', validators=[DataRequired()])
+    platelets = FloatField('Тромбоциты, килотромбоциты/мл', validators=[DataRequired()])
+    serum_creatinine = FloatField('Уровень сывороточного креатинина в крови, мг/дл', validators=[DataRequired()])
+    serum_sodium = IntegerField('Уровень сывороточного натрия в крови, мг-экв/л', validators=[DataRequired()])
+    sex = IntegerField('Пол, 1/0', validators=[DataRequired()])
+    smoking = IntegerField('Курение, 1/0', validators=[DataRequired()])
+    time = IntegerField('Срок наблюдения, дни', validators=[DataRequired()])
 
 
 app = Flask(__name__)
@@ -43,9 +43,8 @@ def get_prediction(age, anaemia, creatinine_phosphokinase, diabetes, ejection_fr
     req = urllib.request.Request(myurl)
     req.add_header('Content-Type', 'application/json; charset=utf-8')
     jsondata = json.dumps(body)
-    jsondataasbytes = jsondata.encode('utf-8')  # needs to be bytes
+    jsondataasbytes = jsondata.encode('utf-8')
     req.add_header('Content-Length', len(jsondataasbytes))
-    # print (jsondataasbytes)
     response = urllib.request.urlopen(req, jsondataasbytes)
     return json.loads(response.read())['predictions']
 
@@ -62,7 +61,7 @@ def predicted(response):
     return render_template('predicted.html', response=response)
 
 
-@app.route('/predict_form', methods=['GET', 'POST'])
+@app.route('/form', methods=['GET', 'POST'])
 def predict_form():
     form = ClientDataForm()
     data = dict()
@@ -81,12 +80,18 @@ def predict_form():
         data['time'] = request.form.get('time')
 
         try:
-            response = str(get_prediction(data['age'], data['anaemia'],
-                                          data['creatinine_phosphokinase'], data['diabetes'],
-                                          data['ejection_fraction'], data['high_blood_pressure'],
-                                          data['platelets'], data['serum_creatinine'],
-                                          data['serum_sodium'], data['sex'],
-                                          data['smoking'], data['time']))
+            response = str(get_prediction(data['age'],
+                                          data['anaemia'],
+                                          data['creatinine_phosphokinase'],
+                                          data['diabetes'],
+                                          data['ejection_fraction'],
+                                          data['high_blood_pressure'],
+                                          data['platelets'],
+                                          data['serum_creatinine'],
+                                          data['serum_sodium'],
+                                          data['sex'],
+                                          data['smoking'],
+                                          data['time']))
             print(response)
         except ConnectionError:
             response = json.dumps({"error": "ConnectionError"})
@@ -96,3 +101,4 @@ def predict_form():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8181, debug=True)
+
